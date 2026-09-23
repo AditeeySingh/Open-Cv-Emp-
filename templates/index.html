@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Discovery & Cross-Video Re-Identification</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo-area">
+            <div class="logo-icon">👁️</div>
+            <div class="logo-text">
+                <h1>Face Discovery & Re-ID</h1>
+                <p>Cross-Video Matching Engine (Video 1 ➔ Video 2)</p>
+            </div>
+        </div>
+
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="tab-upload">Upload & Match</button>
+            <button class="tab-btn" data-tab="tab-gallery">Discovered Gallery</button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- TAB 1: UPLOAD & MATCH -->
+        <section id="tab-upload" class="tab-content active">
+            <div class="upload-card">
+                <h2 class="section-title">Select or Drop Video File</h2>
+                <p class="section-desc">
+                    Upload your video file (<code>.mp4</code>, <code>.avi</code>, <code>.mov</code>, <code>.mkv</code>). 
+                    The engine will assign unique IDs (<code>Person_001</code>, <code>Person_002</code>, etc.) in Video 1 and automatically detect cross-video re-identifications when you process Video 2.
+                </p>
+
+                <!-- Dropzone -->
+                <div class="dropzone" id="dropzone">
+                    <div class="dropzone-icon">📁</div>
+                    <div class="dropzone-text">Click to browse or drag & drop video here</div>
+                    <div class="dropzone-hint">Supports MP4, AVI, MOV, MKV, WebM up to 500MB</div>
+                    <input type="file" id="video-input" accept="video/mp4,video/x-m4v,video/*">
+                </div>
+
+                <div class="selected-file-info" id="selected-file-info" style="display: none;">
+                    <div>Selected: <span class="file-name" id="selected-file-name">filename.mp4</span></div>
+                    <div style="color: var(--text-secondary);" id="selected-file-size">0 MB</div>
+                </div>
+
+                <div class="upload-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="save-annotated" checked>
+                        <span>Generate annotated output video with bounding boxes & ID tags</span>
+                    </label>
+
+                    <button class="btn-primary" id="btn-process" disabled>
+                        🚀 Select a Video to Start
+                    </button>
+                </div>
+            </div>
+
+            <!-- Processing / Progress Card -->
+            <div class="progress-card" id="progress-card">
+                <div class="progress-header">
+                    <span style="font-weight: 600; font-size: 15px;">
+                        <span class="progress-spinner"></span>
+                        <span id="progress-text">Processing video...</span>
+                    </span>
+                    <span id="progress-percent" style="font-weight: 700; font-size: 15px; color: var(--accent-blue);">0%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progress-bar-fill"></div>
+                </div>
+
+                <div class="live-progress-stats" id="live-progress-stats" style="display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;">
+                    <div class="stat-pill">
+                        <span style="color: var(--text-secondary);">Frames:</span> 
+                        <strong id="live-stat-frames" style="color: var(--text-primary);">0 / 0</strong>
+                    </div>
+                    <div class="stat-pill">
+                        <span style="color: var(--text-secondary);">Video Time:</span> 
+                        <strong id="live-stat-time" style="color: var(--text-primary);">00:00</strong>
+                    </div>
+                    <div class="stat-pill">
+                        <span style="color: var(--text-secondary);">Speed:</span> 
+                        <strong id="live-stat-fps" style="color: var(--accent-blue);">0.0 fps</strong>
+                    </div>
+                    <div class="stat-pill">
+                        <span style="color: var(--text-secondary);">Detected Faces:</span> 
+                        <strong id="live-stat-detected" style="color: var(--accent-emerald);">0</strong>
+                    </div>
+                    <div class="stat-pill" id="live-pill-matches" style="display: none;">
+                        <strong id="live-stat-matches" style="color: var(--accent-amber);">🎯 0 Cross-Video Matches</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Card -->
+            <div class="results-card" id="results-card">
+                <h2 class="section-title">Analysis & Re-Identification Results</h2>
+                <p class="section-desc">Identities cataloged and matched from this video run:</p>
+
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-num" id="res-total-faces">0</div>
+                        <div class="metric-label">Identities in this Video</div>
+                    </div>
+                    <div class="metric-box matches">
+                        <div class="metric-num" id="res-cross-matches" style="color: var(--accent-amber);">0</div>
+                        <div class="metric-label">Cross-Video Matches</div>
+                    </div>
+                    <div class="metric-box new">
+                        <div class="metric-num" id="res-new-identities" style="color: var(--accent-emerald);">0</div>
+                        <div class="metric-label">New Identities Discovered</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-num" id="res-gallery-total">0</div>
+                        <div class="metric-label">Total IDs in Gallery</div>
+                    </div>
+                </div>
+
+                <div class="download-actions" id="download-actions">
+                    <!-- Dynamic download buttons injected here -->
+                </div>
+
+                <h3 style="font-size: 16px; margin-bottom: 12px; font-weight: 700;">Detected People in Video:</h3>
+                <div class="people-grid" id="detected-people-grid">
+                    <!-- Person cards injected here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: GALLERY VIEW -->
+        <section id="tab-gallery" class="tab-content">
+            <div class="upload-card">
+                <div class="gallery-toolbar">
+                    <div>
+                        <h2 class="section-title" style="margin-bottom: 4px;">Universal Identity Gallery</h2>
+                        <p class="section-desc" style="margin-bottom: 0;">
+                            Persistent database of all individuals discovered across all processed video runs.
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span class="badge badge-match" id="gallery-count-badge">0 People</span>
+                        <a href="/download_report" class="btn-action">📊 Download Excel Report</a>
+                        <button class="btn-danger" id="btn-reset-gallery">🔄 Reset Gallery</button>
+                    </div>
+                </div>
+
+                <div class="people-grid" id="gallery-grid">
+                    <!-- Gallery cards injected here -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

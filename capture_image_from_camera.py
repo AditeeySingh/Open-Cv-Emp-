@@ -1,30 +1,47 @@
 import cv2
-from matplotlib import pyplot as plt
+import os
+
+KNOWN_FACES_DIR = "known_faces"
+os.makedirs(KNOWN_FACES_DIR, exist_ok=True)
 
 cam_port = 0
 cam = cv2.VideoCapture(cam_port)
 
-# Reading the input using the camera
-inp = input('Enter person name: ')
+if not cam.isOpened():
+    print(f"Error: Unable to open camera on port {cam_port}")
+    exit(1)
+
+inp = input('Enter person name to enroll: ').strip()
+if not inp:
+    print("Invalid name. Exiting.")
+    cam.release()
+    exit(1)
+
+safe_name = inp.replace(' ', '_').lower()
+save_path = os.path.join(KNOWN_FACES_DIR, f"{safe_name}.png")
+
+print("Press 's' or 'Space' to capture photo, or 'q' to cancel.")
 
 while True:
     result, image = cam.read()
-    if result:
-        # Display the image
-        plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-        plt.title(inp)
-        plt.show()
+    if not result:
+        print("No image detected from camera. Retrying...")
+        continue
 
-        # Ask the user if they want to save the image
-        save = input("Do you want to save the image? (y/n): ")
-        if save.lower() == 'y':
-            cv2.imwrite(inp + ".png", image)
-            print("Image saved as", inp + ".png")
-            break
-        else:
-            print("Image not saved. Retaking image.")
-    else:
-        print("No image detected. Please try again.")
+    # Show live preview
+    preview = image.copy()
+    cv2.putText(preview, f"Enrolling: {inp}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    cv2.putText(preview, "Press 's' to Save | 'q' to Quit", (20, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+    cv2.imshow("Capture Face", preview)
 
-# Release the camera
+    key = cv2.waitKey(1) & 0xFF
+    if key in (ord('s'), 32):  # 's' or Space
+        cv2.imwrite(save_path, image)
+        print(f"Face image saved to: {save_path}")
+        break
+    elif key == ord('q'):
+        print("Capture cancelled.")
+        break
+
 cam.release()
+cv2.destroyAllWindows()

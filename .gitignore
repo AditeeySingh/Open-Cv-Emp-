@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# macOS
+.DS_Store
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Runtime video data & processed crops
+uploads/*
+!uploads/.gitkeep
+output_videos/*
+!output_videos/.gitkeep
+unknown_faces/*
+!unknown_faces/.gitkeep
+gallery/*.jpg
+gallery/*.pkl
+!gallery/.gitkeep
+known_faces/*
+!known_faces/.gitkeep
